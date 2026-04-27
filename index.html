@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>何かをカウント — タップするだけのシンプルなカウントアプリ</title>
+<meta name="description" content="ボタンをタップするだけで、毎日の「歩いた」「薬のんだ」「水分補給」などを記録できるシンプルなカウントアプリ。週ごと・月ごと・年ごとに集計、テーマカラーも自由に選べます。" />
+<meta name="theme-color" content="#2e7d32" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
+<meta property="og:title" content="何かをカウント — タップするだけのシンプルなカウントアプリ" />
+<meta property="og:description" content="毎日の「歩いた」「薬のんだ」「水分補給」をタップで記録。週・月・年で自動集計。" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="icon.png" />
+<style>
+  :root {
+    --green-900: #1b5e20;
+    --green-700: #2e7d32;
+    --green-500: #4caf50;
+    --green-200: #c8e6c9;
+    --green-50:  #e8f5e9;
+    --ink:       #1f2421;
+    --ink-soft:  #4b5651;
+    --paper:     #fbfdfb;
+    --card:      #ffffff;
+    --line:      #e6ece7;
+    --shadow:    0 18px 48px -22px rgba(27,94,32,.35);
+    --radius:    18px;
+    --radius-l:  28px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+                 "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI",
+                 Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--green-700); }
+  a:hover { color: var(--green-900); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ========== Header ========== */
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(251,253,251,0.78);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; max-width: 1080px; margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+  .brand img { width: 36px; height: 36px; border-radius: 9px; }
+  .brand span { font-size: 16px; }
+  nav.top a {
+    font-size: 14px; color: var(--ink-soft);
+    text-decoration: none; margin-left: 22px;
+  }
+  nav.top a:hover { color: var(--green-700); }
+
+  /* ========== Hero ========== */
+  .hero {
+    padding: 80px 0 48px;
+    background:
+      radial-gradient(1200px 480px at 80% -10%, var(--green-50), transparent 60%),
+      radial-gradient(900px 420px at 0% 0%, #f1faf2, transparent 60%);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px; align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5.4vw, 56px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    font-weight: 900;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(180deg, var(--green-700), var(--green-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p.lead {
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+  }
+  .badges { display: flex; gap: 12px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: var(--green-700);
+    color: white;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    box-shadow: var(--shadow);
+    transition: transform .15s ease;
+  }
+  .badge:hover { transform: translateY(-1px); color: white; }
+  .badge.ghost {
+    background: white; color: var(--green-700);
+    border: 1px solid var(--green-200);
+    box-shadow: none;
+  }
+
+  .phone-stage {
+    position: relative;
+    aspect-ratio: 9 / 19;
+    max-width: 320px;
+    margin: 0 auto;
+    filter: drop-shadow(0 30px 60px rgba(46,125,50,0.25));
+  }
+  .phone-stage img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 38px;
+    border: 8px solid #1a1a1a;
+    background: #1a1a1a;
+  }
+
+  /* ========== Section base ========== */
+  section { padding: 80px 0; }
+  section h2 {
+    font-size: clamp(26px, 3.4vw, 36px);
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+    font-weight: 900;
+  }
+  section p.section-lead {
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 40px;
+    font-size: 17px;
+  }
+
+  /* ========== Features ========== */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .feature:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px -16px rgba(27,94,32,0.25);
+    border-color: var(--green-200);
+  }
+  .feature .ico {
+    width: 44px; height: 44px;
+    background: var(--green-50);
+    color: var(--green-700);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+  .feature h3 { margin: 0 0 6px; font-size: 18px; }
+  .feature p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+
+  /* ========== Showcase ========== */
+  .showcase { background: linear-gradient(180deg, white, var(--green-50)); }
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .show-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    padding: 24px 18px 18px;
+    text-align: center;
+  }
+  .show-card .frame {
+    aspect-ratio: 9 / 19;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 6px solid #1a1a1a;
+    background: #1a1a1a;
+    margin-bottom: 14px;
+  }
+  .show-card .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .show-card h4 { margin: 0 0 4px; font-size: 16px; }
+  .show-card p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* ========== How to use ========== */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .step {
+    border-left: 3px solid var(--green-500);
+    padding: 4px 0 4px 18px;
+  }
+  .step .n {
+    display: inline-block;
+    font-weight: 900; color: var(--green-700);
+    margin-bottom: 4px;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  .step h4 { margin: 0 0 6px; font-size: 17px; }
+  .step p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+  /* ========== FAQ ========== */
+  .faq {
+    background: var(--green-50);
+  }
+  details {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+  details summary {
+    cursor: pointer; font-weight: 700;
+    list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: "+"; color: var(--green-700); font-size: 22px; font-weight: 700;
+  }
+  details[open] summary::after { content: "−"; }
+  details p { margin: 12px 0 0; color: var(--ink-soft); }
+
+  /* ========== CTA & Footer ========== */
+  .cta {
+    text-align: center;
+    background:
+      radial-gradient(700px 240px at 50% -10%, var(--green-200), transparent 60%);
+  }
+  .cta h2 { margin-bottom: 12px; }
+  .cta p { color: var(--ink-soft); margin: 0 0 28px; }
+
+  footer.site {
+    border-top: 1px solid var(--line);
+    padding: 32px 0 48px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  footer .row {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--ink-soft); text-decoration: none; margin-left: 18px; }
+  footer a:hover { color: var(--green-700); }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 880px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .showcase-grid { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    nav.top a { display: none; }
+  }
+  @media (max-width: 520px) {
+    .features { grid-template-columns: 1fr; }
+    section { padding: 60px 0; }
+    .hero { padding: 56px 0 36px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <a class="brand" href="#top" style="text-decoration:none;color:inherit">
+      <img src="icon.png" alt="" />
+      <span>何かをカウント</span>
+    </a>
+    <nav class="top">
+      <a href="#features">特長</a>
+      <a href="#screens">画面</a>
+      <a href="#how">使い方</a>
+      <a href="#faq">FAQ</a>
+      <a href="privacypolicy.html">プライバシー</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>毎日のちょっとを、<br /><span class="accent">タップするだけ</span>で記録。</h1>
+      <p class="lead">
+        「歩いた」「薬のんだ」「水分補給」「筋トレ」——<br />
+        あなたが続けたい何かを、ボタン一発でカウント。<br />
+        週ごと・月ごと・年ごとに自動で集計します。
+      </p>
+      <div class="badges">
+        <a class="badge" href="#screens">画面を見る</a>
+        <a class="badge ghost" href="#how">使い方</a>
+      </div>
+    </div>
+    <div>
+      <div class="phone-stage">
+        <img src="screen-home.png" alt="ホーム画面のスクリーンショット" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <h2>シンプル。だから、続く。</h2>
+    <p class="section-lead">
+      余計な機能を削ぎ落とした、続けるための4タブ構成。
+      入力は基本ワンタップ、間違えても長押しで戻せます。
+    </p>
+    <div class="features">
+      <div class="feature">
+        <div class="ico">●</div>
+        <h3>ワンタップ記録</h3>
+        <p>大きな丸ボタンを押すだけ。誤タップ防止に長押しで−1できます。</p>
+      </div>
+      <div class="feature">
+        <div class="ico">▦</div>
+        <h3>カレンダー表示</h3>
+        <p>日ごとの回数がひと目で分かる。直接入力モードで過去の修正もOK。</p>
+      </div>
+      <div class="feature">
+        <div class="ico">∑</div>
+        <h3>自動集計</h3>
+        <p>週・月・年の合計を自動計算。年度開始月や週はじまりも自由設定。</p>
+      </div>
+      <div class="feature">
+        <div class="ico">A</div>
+        <h3>ボタン名は自由</h3>
+        <p>「歩いた」「薬のんだ」「コーヒー」など、20文字まで自由に決められます。</p>
+      </div>
+      <div class="feature">
+        <div class="ico">◐</div>
+        <h3>テーマカラー</h3>
+        <p>アプリ全体の配色をプリセットから選択。気分に合わせて色替え可能。</p>
+      </div>
+      <div class="feature">
+        <div class="ico">⌂</div>
+        <h3>端末内で完結</h3>
+        <p>記録はあなたの端末内に保存。アカウント登録もログインも不要です。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<section id="screens" class="showcase">
+  <div class="wrap">
+    <h2>すべての画面を、ひと目で。</h2>
+    <p class="section-lead">
+      ホーム・カレンダー・集計・設定の4タブだけ。迷わず使えるように設計しました。
+    </p>
+    <div class="showcase-grid">
+      <div class="show-card">
+        <div class="frame"><img src="screen-home.png" alt="ホーム" /></div>
+        <h4>ホーム</h4><p>大きなボタンでタップして+1。</p>
+      </div>
+      <div class="show-card">
+        <div class="frame"><img src="screen-calendar.png" alt="カレンダー" /></div>
+        <h4>カレンダー</h4><p>日付ごとの回数を一覧で。</p>
+      </div>
+      <div class="show-card">
+        <div class="frame"><img src="screen-summary.png" alt="集計" /></div>
+        <h4>集計</h4><p>週・月・年の合計を自動表示。</p>
+      </div>
+      <div class="show-card">
+        <div class="frame"><img src="screen-settings.png" alt="設定" /></div>
+        <h4>設定</h4><p>ボタン名やテーマを自由に。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW TO USE -->
+<section id="how">
+  <div class="wrap">
+    <h2>3ステップで、今日からはじめる。</h2>
+    <p class="section-lead">使い方はシンプル。設定は数十秒で終わります。</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">STEP 01</div>
+        <h4>ボタン名を決める</h4>
+        <p>「歩いた」「薬のんだ」など、続けたいことの名前を入れます。</p>
+      </div>
+      <div class="step">
+        <div class="n">STEP 02</div>
+        <h4>毎日タップする</h4>
+        <p>達成したらホームの大きなボタンをタップ。間違えたら長押しで−1。</p>
+      </div>
+      <div class="step">
+        <div class="n">STEP 03</div>
+        <h4>集計で振り返る</h4>
+        <p>カレンダーや集計タブで、週・月・年の積み重ねが見られます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <p class="section-lead">使う前に気になるポイントをまとめました。</p>
+
+    <details>
+      <summary>料金はかかりますか？</summary>
+      <p>本体機能はすべて無料でご利用いただけます。アプリには広告が表示されます。</p>
+    </details>
+    <details>
+      <summary>記録したデータはどこに保存されますか？</summary>
+      <p>すべて端末内に保存されます。クラウドや当方サーバーには送信されません。詳しくは<a href="privacypolicy.html">プライバシーポリシー</a>をご覧ください。</p>
+    </details>
+    <details>
+      <summary>1日の最大カウントはいくつまで？</summary>
+      <p>0〜999回まで記録できます。多めの用途にも対応しています。</p>
+    </details>
+    <details>
+      <summary>過去の日付を修正できますか？</summary>
+      <p>カレンダー画面の「直接入力」ボタンをオンにすると、日付をタップして数値を直接入力できます。</p>
+    </details>
+    <details>
+      <summary>週のはじまりや「年」の集計開始月は変えられますか？</summary>
+      <p>設定タブから、週のはじまり(月曜/日曜)や年累計のはじまり月(1〜12月)を自由に変更できます。</p>
+    </details>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <h2>続けたい何かを、今日から数えよう。</h2>
+    <p>ダウンロードしてすぐに使えます。アカウント登録は不要です。</p>
+    <div class="badges" style="justify-content:center">
+      <a class="badge" href="#screens">画面をもう一度見る</a>
+      <a class="badge ghost" href="privacypolicy.html">プライバシーポリシー</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap row">
+    <div>© <span id="y"></span> 何かをカウント</div>
+    <div>
+      <a href="#top">トップ</a>
+      <a href="privacypolicy.html">プライバシーポリシー</a>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+
+</body>
+</html>
